@@ -13,7 +13,7 @@ set -x
 mkdir -p results
 
 ENV=/tmp/macrobenchmark_env
-for bench in flaskblogging djangocms mypy_bench pylint_bench; do
+for bench in flaskblogging djangocms mypy_bench pylint_bench pycparser_bench; do
     rm -rf $ENV
     virtualenv -p $BINARY $ENV
     $ENV/bin/pip install -r benchmarks/${bench}_requirements.txt
