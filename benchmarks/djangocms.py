@@ -79,6 +79,7 @@ def runbenchmark(n=800, out_file=None):
 
     finally:
         p.terminate()
+        p.wait()
 
 if __name__ == "__main__":
     exe = sys.executable

@@ -35,6 +35,7 @@ if __name__ == "__main__":
 
     finally:
         p.terminate()
+        p.wait()
 
     if len(sys.argv) > 2:
         json.dump(times, open(sys.argv[2], 'w'))
