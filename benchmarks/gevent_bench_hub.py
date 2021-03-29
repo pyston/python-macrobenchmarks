@@ -118,5 +118,5 @@ def main():
 
 if __name__ == '__main__':
     # main()
-    for i in range(3000):
+    for i in range(10000):
         bench_switch()
