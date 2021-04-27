@@ -1,0 +1,16 @@
+PasteDeploy==2.1.1
+certifi==2020.12.5
+chardet==3.0.4
+hupper==1.10.2
+idna==2.10
+plaster==1.0
+plaster-pastedeploy==0.7
+pyramid==2.0
+requests==2.24.0
+translationstring==1.4
+urllib3==1.25.11
+venusian==3.0.0
+webob==1.8.7
+zope.deprecation==4.4.0
+zope.interface==5.4.0
+
