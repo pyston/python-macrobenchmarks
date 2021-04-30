@@ -13,7 +13,7 @@ set -x
 mkdir -p results
 
 ENV=/tmp/macrobenchmark_env
-for bench in flaskblogging djangocms mypy_bench pylint_bench pycparser_bench pytorch_alexnet_inference gunicorn aiohttp thrift_bench gevent_bench_hub; do
+for bench in flaskblogging djangocms mypy_bench pylint_bench pycparser_bench pytorch_alexnet_inference gunicorn aiohttp thrift_bench gevent_bench_hub kinto; do
     rm -rf $ENV
     $BINARY -m venv $ENV
     $ENV/bin/pip install -r $(dirname $0)/benchmarks/${bench}_requirements.txt
