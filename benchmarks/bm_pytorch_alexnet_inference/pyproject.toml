@@ -1,0 +1,16 @@
+[project]
+name = "bm_pytorch_alexnet_inference"
+dependencies = [
+    "torch",
+    "Pillow",
+]
+
+# XXX This should be inherited from metabase.
+dynamic = [
+  "name",
+  "version",
+]
+
+[tool.pyperformance]
+# "name" is set automatically.
+metabase = ".."

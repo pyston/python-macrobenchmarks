@@ -1,0 +1,24 @@
+[project]
+name = "bm_djangocms"
+dependencies = [
+    "Django",
+    "django-cms",
+    "djangocms-bootstrap4",
+    "djangocms-file",
+    "djangocms-googlemap",
+    "djangocms-installer",
+    "djangocms-snippet",
+    "djangocms-style",
+    "djangocms-video",
+    "requests",
+]
+
+# XXX This should be inherited from metabase.
+dynamic = [
+  "name",
+  "version",
+]
+
+[tool.pyperformance]
+# "name" is set automatically.
+metabase = ".."

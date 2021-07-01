@@ -1,0 +1,21 @@
+[project]
+#description = "a pyperformance benchmark"
+#readme = "README.rst"
+#requires-python = ">=3.8"
+#license = {file = "LICENSE.txt"}
+
+dependencies = [
+  "pyperf",
+]
+
+urls = {repository = "https://github.com/pyston/python-macrobenchmarks"}
+
+dynamic = [
+  "name",
+  "version",
+]
+
+[tool.pyperformance]
+metabase = ""
+#tags = []
+#extra_opts = ""

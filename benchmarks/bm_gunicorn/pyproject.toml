@@ -1,0 +1,17 @@
+[project]
+name = "bm_gunicorn"
+dependencies = [
+    "gunicorn",
+    "requests",
+    "uvloop",
+]
+
+# XXX This should be inherited from metabase.
+dynamic = [
+  "name",
+  "version",
+]
+
+[tool.pyperformance]
+# "name" is set automatically.
+metabase = ".."

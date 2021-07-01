@@ -1,0 +1,15 @@
+[project]
+name = "bm_thrift"
+dependencies = [
+    "thrift",
+]
+
+# XXX This should be inherited from metabase.
+dynamic = [
+  "name",
+  "version",
+]
+
+[tool.pyperformance]
+# "name" is set automatically.
+metabase = ".."
