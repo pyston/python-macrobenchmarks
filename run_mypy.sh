@@ -18,19 +18,29 @@ set -x
 
 ENV=/tmp/macrobenchmark_env
 rm -rf $ENV
-virtualenv -p $BINARY $ENV
+python3 -m venv -p $BINARY $ENV
+PYTHON=$ENV/bin/python
+
+#$PYTHON -m pip install pyperformance
 
 rm -rf /tmp/mypy
 git clone --depth 1 --branch v0.790 https://github.com/python/mypy/ /tmp/mypy
-cd /tmp/mypy
-
-$ENV/bin/pip install -r mypy-requirements.txt
-$ENV/bin/pip install --upgrade setuptools
+pushd /tmp/mypy
+$PYTHON -m pip install -r mypy-requirements.txt
+$PYTHON -m pip install --upgrade setuptools
 git submodule update --init mypy/typeshed
-$ENV/bin/python setup.py --use-mypyc install
+$PYTHON setup.py --use-mypyc install
+popd
 
-cd -
-time $ENV/bin/python benchmarks/mypy_bench.py 50
-time $ENV/bin/python benchmarks/mypy_bench.py 50
-time $ENV/bin/python benchmarks/mypy_bench.py 50
-
+OPTS=" \
+    --manifest $(dirname $0)/benchmarks/MANIFEST \
+    --venv $ENV \
+    --benchmarks mypy \
+"
+# XXX Run 50 loops each instead of the default 20.
+$PYTHON -m pyperformance run $OPTS \
+    #--output results.json
+$PYTHON -m pyperformance run $OPTS \
+    #--append results.json
+$PYTHON -m pyperformance run $OPTS \
+    #--append results.json

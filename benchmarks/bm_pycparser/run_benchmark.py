@@ -1,9 +1,16 @@
-import json
 import os
-import sys
-import time
+import os.path
 
+import pyperf
 from pycparser import c_parser, c_ast
+
+
+DATADIR = os.path.join(
+    os.path.dirname(__file__),
+    "data",
+)
+TARGET = os.path.join(DATADIR, "pycparser_target")
+
 
 def parse_files(files):
     for code in files:
@@ -11,27 +18,25 @@ def parse_files(files):
         ast = parser.parse(code, '')
         assert isinstance(ast, c_ast.FileAST)
 
-if __name__ == "__main__":
-    n = 20
-    if len(sys.argv) > 1:
-        n = int(sys.argv[1])
 
+def bench_pycparser(loops=20):
     files = []
-    directory = os.path.abspath(__file__ + "/../../data/pycparser_target")
-    for filename in os.listdir(directory):
-        filename = os.path.join(directory, filename)
+    for filename in os.listdir(TARGET):
+        filename = os.path.join(TARGET, filename)
         if not filename.endswith(".ppout"):
             continue
         with open(filename) as f:
             files.append(f.read())
 
-    times = []
-    for i in range(n):
-        times.append(time.time())
-        
-        parse_files(files)
+    _parse = parse_files
+    loops = iter(range(loops))
+    t0 = pyperf.perf_counter()
+    for _ in loops:
+        _parse(files)
+    return pyperf.perf_counter() - t0
 
-    times.append(time.time())
 
-    if len(sys.argv) > 2:
-        json.dump(times, open(sys.argv[2], 'w'))
+if __name__ == "__main__":
+    runner = pyperf.Runner()
+    runner.metadata['description'] = "Test the performance of pycparser"
+    runner.bench_time_func("pycparser", bench_pycparser)

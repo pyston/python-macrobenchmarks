@@ -1,0 +1,17 @@
+[project]
+name = "bm_gevent_switch"
+# XXX Can these be inherited?
+dependencies = [
+    "gevent",
+]
+
+# XXX This should be inherited from metabase.
+dynamic = [
+  "name",
+  "version",
+]
+
+[tool.pyperformance]
+# "name" is set automatically.
+# "metabase" is set automatically
+extra_opts = ["gevent_switch"]

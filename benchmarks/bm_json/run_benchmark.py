@@ -1,31 +1,33 @@
 import json
-import os
-import sys
-import time
+import os.path
 
-if __name__ == "__main__":
-    exe = sys.executable
+import pyperf
 
-    times = []
 
-    with open(os.path.join(os.path.dirname(__file__), "../data/reddit_comments.json")) as f:
+DATADIR = os.path.join(
+    os.path.dirname(__file__),
+    "data",
+)
+TARGET = os.path.join(DATADIR, "reddit_comments.json")
+
+
+def bench_json(loops=400):
+    with open(TARGET) as f:
         s = f.read()
-
     data = s.split('\n')
 
-    n = 400
-    if len(sys.argv) > 1:
-        n = int(sys.argv[1])
-
-    times = []
-
-    for i in range(n):
-        times.append(time.time())
+    json_loads = json.loads
+    loops = iter(range(loops))
+    t0 = pyperf.perf_counter()
+    for _ in loops:
         for s in data:
             if not s:
                 continue
-            json.loads(s)
-    times.append(time.time())
+            json_loads(s)
+    return pyperf.perf_counter() - t0
 
-    if len(sys.argv) > 2:
-        json.dump(times, open(sys.argv[2], 'w'))
+
+if __name__ == "__main__":
+    runner = pyperf.Runner()
+    runner.metadata['description'] = "Test the performance of json"
+    runner.bench_time_func("json", bench_json)

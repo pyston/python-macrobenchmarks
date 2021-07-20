@@ -1,17 +1,23 @@
 # Adapted from https://raw.githubusercontent.com/Thriftpy/thriftpy2/master/benchmark/benchmark_apache_thrift_struct.py
 
-import json
-import time
+import os.path
+import sys
 
+import pyperf
 from thrift.TSerialization import serialize, deserialize
 from thrift.protocol.TBinaryProtocol import (
     TBinaryProtocolFactory,
     TBinaryProtocolAcceleratedFactory
 )
 
-import os
-import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), "../data/thrift"))
+
+DATADIR = os.path.join(
+    os.path.dirname(__file__),
+    "data",
+)
+TARGET = os.path.join(DATADIR, "thrift")
+
+sys.path.insert(0, TARGET)
 from addressbook import ttypes
 
 
@@ -32,27 +38,26 @@ def make_addressbook():
     return ab
 
 
-def main():
+def bench_thrift(loops=1000):
     # proto_factory = TBinaryProtocolFactory()
     proto_factory = TBinaryProtocolAcceleratedFactory()
+    _serialize = serialize
+    _deserialize = deserialize
+    _AddressBook = ttypes.AddressBook
+    _mkaddr = make_addressbook
+    loops = iter(range(loops))
 
-    n = 1000
-    if len(sys.argv) > 1:
-        n = int(sys.argv[1])
-
-    times = []
-
-    for i in range(n):
-        times.append(time.time())
+    t0 = pyperf.perf_counter()
+    for _ in loops:
         for j in range(100):
-            ab = make_addressbook()
-            encoded = serialize(ab, proto_factory)
-            ab2 = ttypes.AddressBook()
-            deserialize(ab2, encoded, proto_factory)
-    times.append(time.time())
+            ab = _mkaddr()
+            encoded = _serialize(ab, proto_factory)
+            ab2 = _AddressBook()
+            _deserialize(ab2, encoded, proto_factory)
+    return pyperf.perf_counter() - t0
 
-    if len(sys.argv) > 2:
-        json.dump(times, open(sys.argv[2], 'w'))
 
 if __name__ == "__main__":
-    main()
+    runner = pyperf.Runner()
+    runner.metadata['description'] = "Test the performance of thrift"
+    runner.bench_time_func("thrift", bench_thrift)
