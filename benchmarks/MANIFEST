@@ -1,6 +1,6 @@
 [benchmarks]
 
-name    version origin  metafile
+name	version	origin	metafile
 aiohttp	-	-	<local>
 djangocms	-	-	<local>
 flaskblogging	-	-	<local>
