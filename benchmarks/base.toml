@@ -20,4 +20,3 @@ dynamic = [
 metabase = ""
 #tags = []
 #extra_opts = ""
-libsdir = ".libs"
