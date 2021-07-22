@@ -146,16 +146,6 @@ if __name__ == "__main__":
     group = runner.argparser.add_mutually_exclusive_group()
     group.add_argument("--serve")
     group.add_argument("datadir", nargs="?")
-    if True:
-        runner.argparser.add_argument("--pre", action="store_true")
-        runner.argparser.add_argument("--post", action="store_true")
-        args = runner.argparser.parse_args()
-        if args.pre:
-            print('### running as prescript ###')
-            sys.exit()
-        if args.post:
-            print('### running as postscript ###')
-            sys.exit()
     args = runner.argparser.parse_args()
 
     if args.serve is not None:
