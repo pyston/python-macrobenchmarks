@@ -25,14 +25,17 @@ def serving(argv, sitedir, addr):
 def waitUntilUp(addr, timeout=10.0):
     end = time.time() + timeout
     addr = parse_socket_addr(addr)
-    while True:
+    started = False
+    current = time.time()
+    while not started or current <= end:
         try:
             with socket.create_connection(addr) as sock:
                 return
         except ConnectionRefusedError:
-            if time.time() > end:
-                raise Exception('Timeout reached when trying to connect')
             time.sleep(0.001)
+        started = True
+        current = time.time()
+    raise Exception('Timeout reached when trying to connect')
 
 
 def parse_socket_addr(addr, *, resolve=True):
