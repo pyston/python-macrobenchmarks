@@ -124,6 +124,23 @@ def bench_djangocms(sitedir, loops=INNER_LOOPS):
         return pyperf.perf_counter() - t0
 
 
+# We can't set "add_cmdline_args" on pyperf.Runner
+# once we've created one.  We work around this with a subclass.
+
+class _Runner(pyperf.Runner):
+    datadir = None
+
+    def __init__(self):
+        def add_worker_args(cmd, _):
+            assert self.datadir
+            cmd.extend([
+                '--serve', self.datadir,
+            ])
+        super().__init__(
+            add_cmdline_args=add_worker_args,
+        )
+
+
 if __name__ == "__main__":
     """
     Usage:
@@ -138,7 +155,7 @@ if __name__ == "__main__":
     The second and third forms are useful if you want to benchmark the
     initial migration phase separately from the second serving phase.
     """
-    runner = pyperf.Runner()
+    runner = _Runner()
     runner.metadata['description'] = "Test the performance of a Django data migration"
 
     # Parse the CLI args.
@@ -186,15 +203,9 @@ if __name__ == "__main__":
 
         # Then run the benchmark.
         if args.serve:
-            def add_worker_args(cmd, _, _datadir=datadir):
-                cmd.extend([
-                    '--serve', _datadir,
-                ])
-            # XXX This is an internal attr but we don't have any other good option.
-            runner._add_cmdline_args = add_worker_args
+            runner.datadir = datadir
 
             def time_func(loops, *args):
                 return bench_djangocms(*args, loops=loops)
-
             runner.bench_time_func("djangocms", time_func, sitedir,
                                    inner_loops=INNER_LOOPS)
