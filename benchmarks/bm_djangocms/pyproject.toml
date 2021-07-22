@@ -22,3 +22,8 @@ dynamic = [
 [tool.pyperformance]
 # "name" is set automatically.
 metabase = ".."
+
+prescript = "run_benchmark.py"
+pre_extra_opts = ["--pre"]
+postscript = "run_benchmark.py"
+post_extra_opts = ["--post"]
