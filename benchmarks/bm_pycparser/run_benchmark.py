@@ -12,28 +12,45 @@ DATADIR = os.path.join(
 TARGET = os.path.join(DATADIR, "pycparser_target")
 
 
-def parse_files(files):
-    for code in files:
-        parser = c_parser.CParser()
-        ast = parser.parse(code, '')
-        assert isinstance(ast, c_ast.FileAST)
+def _iter_files(rootdir=TARGET, *, _cache={}):
+    if not _cache:
+        files = _cache['files'] = []
+        for name in os.listdir(rootdir):
+            if not name.endswith(".ppout"):
+                continue
+            filename = os.path.join(TARGET, name)
+            with open(filename) as f:
+                data = (filename, f.read())
+                files.append(data)
+                yield data
+    else:
+        yield from _cache['files']
 
 
 def bench_pycparser(loops=20):
-    files = []
-    for filename in os.listdir(TARGET):
-        filename = os.path.join(TARGET, filename)
-        if not filename.endswith(".ppout"):
-            continue
-        with open(filename) as f:
-            files.append(f.read())
+    """Measure running pycparser on several large C files N times.
 
-    _parse = parse_files
-    loops = iter(range(loops))
-    t0 = pyperf.perf_counter()
-    for _ in loops:
-        _parse(files)
-    return pyperf.perf_counter() - t0
+    The files are all relatively large, from well-known projects.
+    Each is already preprocessed.
+
+    Only the CParser.parse() calls are measured.  The following are not:
+
+    * finding the target files
+    * reading them from disk
+    * creating the CParser object
+    """
+    elapsed = 0
+    parse = c_parser.CParser.parse
+    for _ in range(loops):
+        for filename, text in _iter_files():
+            # We use a new parser each time because CParser objects
+            # aren't designed for re-use.
+            parser = c_parser.CParser()
+            t0 = pyperf.perf_counter()
+            ast = parse(parser, text, filename)
+            elapsed += pyperf.perf_counter() - t0
+            assert isinstance(ast, c_ast.FileAST)
+    return elapsed
 
 
 if __name__ == "__main__":

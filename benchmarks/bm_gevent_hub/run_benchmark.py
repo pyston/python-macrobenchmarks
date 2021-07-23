@@ -5,15 +5,46 @@ Benchmarks for hub primitive operations.
 Taken from https://github.com/gevent/gevent/blob/master/benchmarks/bench_hub.py
 Modified to remove perf and not need any command line arguments
 """
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+import contextlib
 
 import pyperf
 import gevent
 import gevent.hub
 from greenlet import greenlet
 from greenlet import getcurrent
+
+
+@contextlib.contextmanager
+def active_hub(hub=None):
+    if hub is None:
+        hub = gevent.get_hub()
+    try:
+        yield hub
+    finally:
+        # Destroy the loop so we don't keep building up state (e.g. callbacks).
+        hub.destroy(True)
+
+
+class SwitchingParent(gevent.hub.Hub):
+    """A gevent hub greenlet that switches back and forth with its child."""
+
+    def __init__(self, nswitches):
+        super().__init__(None, None)
+        self.nswitches = nswitches
+        self.child = greenlet(self._run_child, self)
+
+    def _run_child(self):
+        # Back to the hub, which in turn goes
+        # back to the main greenlet
+        switch = getcurrent().parent.switch
+        for _ in range(self.nswitches):
+            switch()
+
+    def run(self):
+        # Return to the main greenlet.
+        switch = self.parent.switch
+        for _ in range(self.nswitches):
+            switch()
 
 
 class NoopWatcher:
@@ -38,84 +69,75 @@ class NoopWatchTarget(object):
         cb(self)
 
 
-def get_switching_greenlets(nswitches=1000):
-    class Parent(type(gevent.get_hub())):
-        def run(self, *, _loops=nswitches):
-            switch = self.parent.switch
-            for _ in range(_loops):
-                switch()
-
-    def child(*, _loops=nswitches):
-        switch = getcurrent().parent.switch
-        # Back to the hub, which in turn goes
-        # back to the main greenlet
-        for _ in range(_loops):
-            switch()
-
-    hub = Parent(None, None)
-    child_greenlet = greenlet(child, hub)
-    return hub, child_greenlet
-
+#############################
+# benchmarks
 
 def bench_switch(loops=1000):
-    _, child = get_switching_greenlets(loops)
-    child_switch = child.switch
-    loops = iter(range(loops))
+    """Measure switching between a greenlet and the gevent hub N^2 times."""
+    hub = SwitchingParent(loops)
+    child = hub.child
 
-    t0 = pyperf.perf_counter()
-    for _ in loops:
-        child_switch()
-    return pyperf.perf_counter() - t0
+    with active_hub(hub):
+        elapsed = 0
+        child_switch = child.switch
+        for _ in range(loops):
+            t0 = pyperf.perf_counter()
+            child_switch()
+            elapsed += pyperf.perf_counter() - t0
+        return elapsed
 
 
 def bench_wait_ready(loops=1000):
+    """Measure waiting for a "noop" watcher to become ready N times."""
     watcher = NoopWatcher()
-    hub = gevent.get_hub()
-    hub_wait = hub.wait
-    loops = iter(range(loops))
 
-    t0 = pyperf.perf_counter()
-    for _ in loops:
-        hub_wait(watcher)
-    return pyperf.perf_counter() - t0
+    with active_hub() as hub:
+        elapsed = 0
+        hub_wait = hub.wait
+        for _ in range(loops):
+            t0 = pyperf.perf_counter()
+            hub_wait(watcher)
+            elapsed += pyperf.perf_counter() - t0
+        return elapsed
 
 
 def bench_cancel_wait(loops=1000):
+    """Measure canceling N watchers.
+    
+    Note that it is the same watcher N times and that it is a fake
+    that pretends to already be started.
+    """
     watcher = ActiveWatcher()
-    hub = gevent.get_hub()
-    hub_cancel_wait = hub.cancel_wait
-    hub_loop = hub.loop
-    loops = iter(range(loops))
 
-    t0 = pyperf.perf_counter()
-    for _ in loops:
-        # Schedule all the callbacks.
-        hub_cancel_wait(watcher, None, True)
-    # Run them!
-    # XXX Start timing here?
-    for cb in hub_loop._callbacks:
-        if cb.callback:
-            cb.callback(*cb.args)
-            cb.stop()  # so the real loop won't do it
-    elapsed = pyperf.perf_counter() - t0
+    with active_hub() as hub:
+        t0 = pyperf.perf_counter()
 
-    # Destroy the loop so we don't keep building these functions up.
-    hub.destroy(True)
+        # Cancel the fake wait requests.
+        for _ in range(loops):
+            # Schedule all the callbacks.
+            hub.cancel_wait(watcher, None, True)
 
-    return elapsed
+        # Wait for all the watchers to be closed.
+        # TODO Start timing here?
+        for cb in hub.loop._callbacks:
+            if cb.callback:
+                cb.callback(*cb.args)
+                cb.stop()  # so the real loop won't do it
+
+        return pyperf.perf_counter() - t0
 
 
 def bench_wait_func_ready(loops=1000):
+    """Measure waiting for N noop watch targets to become ready."""
     watched_objects = [NoopWatchTarget() for _ in range(loops)]
-    wait = gevent.hub.wait
 
     t0 = pyperf.perf_counter()
-    wait(watched_objects)
+    gevent.hub.wait(watched_objects)
     return pyperf.perf_counter() - t0
 
 
 BENCHMARKS = {
-    "gevent_hub": bench_switch,  # XXX Release 10,000 times?
+    "gevent_hub": bench_switch,
     "gevent_wait_func_ready": bench_wait_func_ready,
     "gevent_wait_ready": bench_wait_ready,
     "gevent_cancel_wait": bench_cancel_wait,

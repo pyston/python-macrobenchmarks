@@ -113,15 +113,31 @@ def _ensure_datadir(datadir, preserve=True):
             shutil.rmtree(datadir, ignore_errors=True)
 
 
-def bench_djangocms(sitedir, loops=INNER_LOOPS):
-    requests_get = requests.get
-    loops = iter(range(loops))
+#############################
+# benchmarks
 
+def bench_djangocms_requests(sitedir, loops=INNER_LOOPS):
+    """Measure N HTTP requests to a local server.
+
+    Note that the server is freshly started here.
+
+    Only the time for requests is measured here.  The following are not:
+
+    * preparing the site the server will serve
+    * starting the server
+    * stopping the server
+
+    Hence this should be used with bench_time_func()
+    insted of bench_func().
+    """
+    elapsed = 0
     with netutils.serving(ARGV_SERVE, sitedir, "127.0.0.1:8000"):
-        t0 = pyperf.perf_counter()
-        for _ in loops:
+        requests_get = requests.get
+        for _ in range(loops):
+            t0 = pyperf.perf_counter()
             requests_get("http://localhost:8000/").text
-        return pyperf.perf_counter() - t0
+            elapsed += pyperf.perf_counter() - t0
+    return elapsed
 
 
 # We can't set "add_cmdline_args" on pyperf.Runner
@@ -206,6 +222,6 @@ if __name__ == "__main__":
             runner.datadir = datadir
 
             def time_func(loops, *args):
-                return bench_djangocms(*args, loops=loops)
+                return bench_djangocms_requests(*args, loops=loops)
             runner.bench_time_func("djangocms", time_func, sitedir,
                                    inner_loops=INNER_LOOPS)
