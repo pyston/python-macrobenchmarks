@@ -4,13 +4,7 @@ dependencies = [
     "torch",
     "Pillow",
 ]
-
-# XXX This should be inherited from metabase.
-dynamic = [
-  "name",
-  "version",
-]
+dynamic = ["version"]
 
 [tool.pyperformance]
-# "name" is set automatically.
 metabase = ".."

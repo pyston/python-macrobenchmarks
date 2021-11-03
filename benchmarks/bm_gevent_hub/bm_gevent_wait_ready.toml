@@ -1,17 +1,7 @@
 [project]
 name = "bm_gevent_wait_ready"
-# XXX Can these be inherited?
-dependencies = [
-    "gevent",
-]
-
-# XXX This should be inherited from metabase.
-dynamic = [
-  "name",
-  "version",
-]
+dependencies = ["gevent"]
+dynamic = ["version"]
 
 [tool.pyperformance]
-# "name" is set automatically.
-# "metabase" is set automatically
 extra_opts = ["gevent_wait_ready"]

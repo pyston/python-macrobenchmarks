@@ -1,28 +1,14 @@
 [benchmarks]
 
-name	version	origin	metafile
-aiohttp	-	-	<local>
-djangocms	-	-	<local>
-flaskblogging	-	-	<local>
-gevent_hub	-	-	<local>
-gunicorn	-	-	<local>
-json	-	-	<local>
-mypy	-	-	<local>
-pycparser	-	-	<local>
-pylint	-	-	<local>
-pytorch_alexnet_inference	-	-	<local>
-thrift	-	-	<local>
-
-
-[group default]
-aiohttp
-djangocms
-flaskblogging
-gevent_hub
-gunicorn
-json
-mypy
-pycparser
-pylint
-pytorch_alexnet_inference
-thrift
+name	metafile
+aiohttp	<local>
+djangocms	<local>
+flaskblogging	<local>
+gevent_hub	<local>
+gunicorn	<local>
+json	<local>
+mypy	<local>
+pycparser	<local>
+pylint	<local>
+pytorch_alexnet_inference	<local>
+thrift	<local>
