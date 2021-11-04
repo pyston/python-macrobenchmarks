@@ -8,10 +8,11 @@ fi
 BINARY=$1
 
 set -u
-set -x
 
-#python3 -m pip install pyperformance
-python3 -m pyperformance run \
-    --manifest $(dirname $0)/benchmarks/MANIFEST \
-    --python $BINARY \
-    --output results.json
+ENV=/tmp/macrobenchmark_env
+rm -rf $ENV
+export PYPERFORMANCE=
+for bench in flaskblogging djangocms mypy_bench pylint_bench pycparser_bench pytorch_alexnet_inference gunicorn aiohttp thrift_bench gevent_bench_hub; do
+    ./run_benchmarks.sh --python $BINARY --venv $ENV --benchmarks $bench
+    # XXX Convert results to verbose "time" output.
+done

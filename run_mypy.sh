@@ -14,33 +14,15 @@ fi
 BINARY=$1
 
 set -u
-set -x
 
 ENV=/tmp/macrobenchmark_env
 rm -rf $ENV
-python3 -m venv -p $BINARY $ENV
-PYTHON=$ENV/bin/python
-
-#$PYTHON -m pip install pyperformance
-
 rm -rf /tmp/mypy
-git clone --depth 1 --branch v0.790 https://github.com/python/mypy/ /tmp/mypy
-pushd /tmp/mypy
-$PYTHON -m pip install -r mypy-requirements.txt
-$PYTHON -m pip install --upgrade setuptools
-git submodule update --init mypy/typeshed
-$PYTHON setup.py --use-mypyc install
-popd
-
-OPTS=" \
-    --manifest $(dirname $0)/benchmarks/MANIFEST \
-    --venv $ENV \
-    --benchmarks mypy \
-"
-# XXX Run 50 loops each instead of the default 20.
-$PYTHON -m pyperformance run $OPTS \
-    #--output results.json
-$PYTHON -m pyperformance run $OPTS \
-    #--append results.json
-$PYTHON -m pyperformance run $OPTS \
-    #--append results.json
+export PYPERFORMANCE=
+export WITH_MYPYC=/tmp/mypy
+./run_benchmarks.sh --python $BINARY --venv $ENV --benchmarks mypy #50
+# XXX Convert results to verbose "time" output.
+./run_benchmarks.sh --python $BINARY --venv $ENV --benchmarks mypy #50
+# XXX Convert results to verbose "time" output.
+./run_benchmarks.sh --python $BINARY --venv $ENV --benchmarks mypy #50
+# XXX Convert results to verbose "time" output.
