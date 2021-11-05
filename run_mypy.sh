@@ -20,10 +20,9 @@ rm -rf $ENV
 rm -rf /tmp/mypy
 export PYPERFORMANCE=
 export WITH_MYPYC=/tmp/mypy
-# XXX Do it 50 times.
-./run_benchmarks.sh --python $BINARY --venv $ENV --benchmarks mypy
+./run_benchmarks.sh --python $BINARY --venv $ENV --benchmarks mypyc
 # XXX Convert results to verbose "time" output.
-./run_benchmarks.sh --python $BINARY --venv $ENV --benchmarks mypy --skip-setup
+./run_benchmarks.sh --python $BINARY --venv $ENV --benchmarks mypyc --skip-setup
 # XXX Convert results to verbose "time" output.
-./run_benchmarks.sh --python $BINARY --venv $ENV --benchmarks mypy --skip-setup
+./run_benchmarks.sh --python $BINARY --venv $ENV --benchmarks mypyc --skip-setup
 # XXX Convert results to verbose "time" output.

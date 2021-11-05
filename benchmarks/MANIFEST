@@ -8,7 +8,11 @@ gevent_hub	<local>
 gunicorn	<local>
 json	<local>
 mypy	<local>
+mypyc	<local:mypy>
 pycparser	<local>
 pylint	<local>
 pytorch_alexnet_inference	<local>
 thrift	<local>
+
+[group default]
+-mypyc
