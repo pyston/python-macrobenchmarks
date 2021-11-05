@@ -10,7 +10,6 @@ function verbose() {
 }
 
 now=$(date --utc +'%Y%m%d-%H%M%S')
-outdir=results
 
 
 # Extract values from env vars.
@@ -41,29 +40,67 @@ set -u
 
 # Parse the command-line.
 target_python=
-reset_venv='no'
 venv=
-prev=
-for arg in "$@"; do
-    if [ "$prev" = "-p" -o "$prev" = "--python" ]; then
-        target_python=$arg
-    elif [ "$prev" = "--venv" ]; then
-        venv=$arg
-    fi
-    prev=$arg
+reset_venv='no'
+manifest=
+outfile=
+argv=()
+while [ $# -gt 0 ]; do
+    arg=$1
+    shift
+    case $arg in
+        -p|--python)
+            target_python=$1
+            shift
+            ;;
+        --venv)
+            venv=$1
+            shift
+            ;;
+        --manifest)
+            manifest=$1
+            shift
+            ;;
+        -o|--output)
+            outfile=$1
+            shift
+            ;;
+        *)
+            argv+=("$arg")
+            ;;
+    esac
 done
 if [ -z "$target_python" ]; then
-    if [ -z "$venv" ]; then
+    target_python=$venv/bin/python3
+    if [ -z "$venv" -o ! -e $target_python ]; then
         >&2 echo "ERROR: missing -p/--python arg"
         exit 1
     fi
-    target_python=$venv/bin/python3
-fi
-if [ -z "$venv" ]; then
-    reset_venv='yes'
+elif [ -z "$venv" ]; then
     venv=venv/pyston-python-macrobenchmarks
-elif [ ! -e "$venv" ]; then
     reset_venv='yes'
+elif [ ! -e $venv ]; then
+    reset_venv='yes'
+    >&2 echo "WARNING: requested venv does not exist but will be created"
+elif [ "$(realpath $venv/bin/python3)" != $target_python ]; then
+    reset_venv='yes'
+    >&2 echo "WARNING: requested venv is outdated and will be reset"
+fi
+if [ -z "$manifest" ]; then
+    manifest=benchmarks/MANIFEST
+fi
+if [ -z "$outfile" ]; then
+    outdir=results
+    outfile=$outdir/results-$now.json
+elif [ -d $outfile ]; then
+    outdir=$outfile
+    outfile=$outdir/results-$now.json
+else
+    outdir=$(dirname $outfile)
+    if [ -z "$outdir" ]; then
+        outdir = '.'
+        outfile=./$outfile
+    fi
 fi
 
 
@@ -93,6 +130,6 @@ verbose mkdir -p $outdir
 # Run the benchmarks.
 verbose $venv/bin/python3 -m pyperformance run \
     --venv $venv \
-    --manifest benchmarks/MANIFEST \
-    --output $outdir/results-$now.json \
-    "$@"
+    --manifest $manifest \
+    --output $outfile \
+    "${argv[@]}"
