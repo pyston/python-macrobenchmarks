@@ -30,19 +30,7 @@ if [ -n "$PYPERFORMANCE" ]; then
         clone_pp='yes'
     fi
 fi
-if [ -z "$WITH_MYPYC" ] || [ "$WITH_MYPYC" = 'no' ] || [ "$WITH_MYPYC" = '0' ]; then
-    mypy=
-    reset_mypy='no'
-elif [ "$WITH_MYPYC" = 'yes' ] || [ "$WITH_MYPYC" = '1' ]; then
-    mypy=/tmp/mypy
-    reset_mypy='yes'
-elif [ -e "$WITH_MYPYC" ]; then
-    mypy=$WITH_MYPYC
-    reset_mypy='no'
-else
-    mypy=$WITH_MYPYC
-    reset_mypy='yes'
-fi
+
 
 set -u
 
@@ -53,12 +41,14 @@ venv=
 reset_venv='no'
 manifest=
 outfile=
+benchmarks=
+mypy='no'
 skip_setup='no'
 argv=()
 while [ $# -gt 0 ]; do
     arg=$1
     shift
-    case $arg in
+    case "$arg" in
         -p|--python)
             target_python=$1
             shift
@@ -75,6 +65,23 @@ while [ $# -gt 0 ]; do
             outfile=$1
             shift
             ;;
+        -b|--benchmarks)
+            benchmarks=$1
+            shift
+            ;;
+        --with-mypyc)
+            mypy='yes'
+            if [ $# -gt 0 ]; then
+                case $1 in
+                    -*)
+                        ;;
+                    *)
+                        mypy=$1
+                        shift
+                        ;;
+                esac
+            fi
+            ;;
         --skip-setup)
             skip_setup='yes'
             ;;
@@ -83,6 +90,7 @@ while [ $# -gt 0 ]; do
             ;;
     esac
 done
+
 if [ -z "$target_python" ]; then
     target_python=$venv/bin/python3
     if [ -z "$venv" -o ! -e $target_python ]; then
@@ -114,6 +122,35 @@ else
         outdir = '.'
         outfile=./$outfile
     fi
+fi
+if [ -z "$benchmarks" ]; then
+    if [ "$mypy" != "no" ]; then
+        benchmarks='mypyc'
+    else
+        benchmarks='default'
+    fi
+else
+    case $benchmarks in
+        *mypyc*)
+            if [ "$mypy" = 'no' ]; then
+                mypy='yes'
+            fi
+            ;;
+        *mypy*)
+            benchmarks=${benchmarks/mypy/mypyc}
+            ;;
+    esac
+fi
+if [ -z "$mypy" -o "$mypy" = 'yes' ]; then
+    mypy=/tmp/mypy
+    reset_mypy='yes'
+elif [ $mypy == 'no' ]; then
+    mypy=
+    reset_mypy='no'
+elif [ ! -e $mypy ]; then
+    reset_mypy='yes'
+else
+    reset_mypy='no'
 fi
 
 
@@ -165,5 +202,6 @@ divider "running the benchmarks"
 verbose $venv/bin/python3 -m pyperformance run \
     --venv $venv \
     --manifest $manifest \
+    --benchmarks $benchmarks \
     --output $outfile \
     "${argv[@]}"

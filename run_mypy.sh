@@ -19,10 +19,9 @@ ENV=/tmp/macrobenchmark_env
 rm -rf $ENV
 rm -rf /tmp/mypy
 export PYPERFORMANCE=
-export WITH_MYPYC=/tmp/mypy
-./run_benchmarks.sh --python $BINARY --venv $ENV --benchmarks mypyc
+./run_benchmarks.sh --python $BINARY --venv $ENV --with-mypyc
 # XXX Convert results to verbose "time" output.
-./run_benchmarks.sh --python $BINARY --venv $ENV --benchmarks mypyc --skip-setup
+./run_benchmarks.sh --python $BINARY --venv $ENV --with-mypyc --skip-setup
 # XXX Convert results to verbose "time" output.
-./run_benchmarks.sh --python $BINARY --venv $ENV --benchmarks mypyc --skip-setup
+./run_benchmarks.sh --python $BINARY --venv $ENV --with-mypyc --skip-setup
 # XXX Convert results to verbose "time" output.
