@@ -53,6 +53,7 @@ venv=
 reset_venv='no'
 manifest=
 outfile=
+skip_setup='no'
 argv=()
 while [ $# -gt 0 ]; do
     arg=$1
@@ -73,6 +74,9 @@ while [ $# -gt 0 ]; do
         -o|--output)
             outfile=$1
             shift
+            ;;
+        --skip-setup)
+            skip_setup='yes'
             ;;
         *)
             argv+=("$arg")
@@ -114,45 +118,46 @@ fi
 
 
 # Set up the execution environment.
+if [ $skip_setup = 'no' ]; then
+    if [ $reset_venv = 'yes' ]; then
+        divider "creating the top-level venv at $venv"
+        verbose rm -rf $venv
+        verbose $target_python -m venv $venv
+    fi
+    divider "ensuring setuptools is up-to-date in $venv"
+    verbose $venv/bin/pip install --upgrade setuptools
 
-if [ $reset_venv = 'yes' ]; then
-    divider "creating the top-level venv at $venv"
-    verbose rm -rf $venv
-    verbose $target_python -m venv $venv
-fi
-divider "ensuring setuptools is up-to-date in $venv"
-verbose $venv/bin/pip install --upgrade setuptools
+    if [ $clone_pp = 'yes' ]; then
+        divider "preparing pyperformance at $pyperformance"
+        verbose git clone https://github.com/python/pyperformance "$pyperformance"
+    fi
+    if [ $pyperformance = 'pyperformance' ]; then
+        divider "installing pyperformance from PyPI"
+    else
+        divider "installing pyperformance into $venv from $pyperformance"
+    fi
+    verbose $venv/bin/pip install --upgrade "$pyperformance"
 
-if [ $clone_pp = 'yes' ]; then
-    divider "preparing pyperformance at $pyperformance"
-    verbose git clone https://github.com/python/pyperformance "$pyperformance"
-fi
-if [ $pyperformance = 'pyperformance' ]; then
-    divider "installing pyperformance from PyPI"
-else
-    divider "installing pyperformance into $venv from $pyperformance"
-fi
-verbose $venv/bin/pip install --upgrade "$pyperformance"
-
-if [ -n "$mypy" ]; then
-    if [ $reset_mypy = 'yes' ]; then
-        divider "getting a fresh copy of the mypy repo"
-        verbose rm -rf $mypy
-        verbose git clone --depth 1 --branch v0.790 https://github.com/python/mypy/ $mypy
+    if [ -n "$mypy" ]; then
+        if [ $reset_mypy = 'yes' ]; then
+            divider "getting a fresh copy of the mypy repo"
+            verbose rm -rf $mypy
+            verbose git clone --depth 1 --branch v0.790 https://github.com/python/mypy/ $mypy
+            pushd $mypy
+            verbose git submodule update --init mypy/typeshed
+            popd
+        fi
         pushd $mypy
-        verbose git submodule update --init mypy/typeshed
+        divider "installing the mypy requirements into $venv"
+        verbose $venv/bin/pip install -r mypy-requirements.txt
+        divider "building mypyc and installing it in $venv"
+        verbose $venv/bin/python setup.py --use-mypyc install
         popd
     fi
-    pushd $mypy
-    divider "installing the mypy requirements into $venv"
-    verbose $venv/bin/pip install -r mypy-requirements.txt
-    divider "building mypyc and installing it in $venv"
-    verbose $venv/bin/python setup.py --use-mypyc install
-    popd
-fi
 
-divider "other setup"
-verbose mkdir -p $outdir
+    divider "other setup"
+    verbose mkdir -p $outdir
+fi
 
 
 # Run the benchmarks.
