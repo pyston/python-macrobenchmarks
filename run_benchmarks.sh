@@ -21,10 +21,10 @@ if [ -n "$PYPERFORMANCE" ]; then
         clone_pp='yes'
     fi
 fi
-if [ -z "$WITH_MYPYC" ] || [ "$WITH_MYPYC" = 'no' ] || [ "$WITH_MYPYC" -eq 0 ]; then
+if [ -z "$WITH_MYPYC" ] || [ "$WITH_MYPYC" = 'no' ] || [ "$WITH_MYPYC" = '0' ]; then
     mypy=
     reset_mypy='no'
-elif [ "$WITH_MYPYC" = 'yes' ] || [ "$WITH_MYPYC" -eq 1 ]; then
+elif [ "$WITH_MYPYC" = 'yes' ] || [ "$WITH_MYPYC" = '1' ]; then
     mypy=/tmp/mypy
     reset_mypy='yes'
 elif [ -e "$WITH_MYPYC" ]; then
