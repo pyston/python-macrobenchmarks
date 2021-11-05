@@ -129,3 +129,4 @@ dmypy.json
 .pyre/
 
 results
+benchmarks/bm_pytorch_alexnet_inference/data/dog.jpg
