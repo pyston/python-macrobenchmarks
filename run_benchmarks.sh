@@ -2,6 +2,15 @@
 
 set -e
 
+function divider() {
+    local title=$1
+    echo
+    echo '##################################################'
+    echo "# $title"
+    echo '##################################################'
+    echo
+}
+
 function verbose() {
     (
     set -x
@@ -105,29 +114,48 @@ fi
 
 
 # Set up the execution environment.
+
 if [ $reset_venv = 'yes' ]; then
+    divider "creating the top-level venv at $venv"
     verbose rm -rf $venv
     verbose $target_python -m venv $venv
 fi
+divider "ensuring setuptools is up-to-date in $venv"
+verbose $venv/bin/pip install --upgrade setuptools
+
 if [ $clone_pp = 'yes' ]; then
+    divider "preparing pyperformance at $pyperformance"
     verbose git clone https://github.com/python/pyperformance "$pyperformance"
 fi
+if [ $pyperformance = 'pyperformance' ]; then
+    divider "installing pyperformance from PyPI"
+else
+    divider "installing pyperformance into $venv from $pyperformance"
+fi
 verbose $venv/bin/pip install --upgrade "$pyperformance"
+
 if [ $reset_mypy = 'yes' ]; then
+    divider "getting a fresh copy of the mypy repo"
     verbose rm -rf $mypy
     verbose git clone --depth 1 --branch v0.790 https://github.com/python/mypy/ $mypy
+    pushd $mypy
+    verbose git submodule update --init mypy/typeshed
+    popd
 
     pushd $mypy
+    divider "installing the mypy requirements into $venv"
     verbose $venv/bin/pip install -r mypy-requirements.txt
-    verbose $venv/bin/pip install --upgrade setuptools
-    verbose git submodule update --init mypy/typeshed
+    divider "building mypyc and installing it in $venv"
     verbose $venv/bin/python setup.py --use-mypyc install
     popd
 fi
+
+divider "other setup"
 verbose mkdir -p $outdir
 
 
 # Run the benchmarks.
+divider "running the benchmarks"
 verbose $venv/bin/python3 -m pyperformance run \
     --venv $venv \
     --manifest $manifest \
