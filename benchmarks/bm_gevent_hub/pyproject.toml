@@ -4,4 +4,4 @@ dependencies = ["gevent"]
 dynamic = ["version"]
 
 [tool.pyperformance]
-metabase = ".."
+inherits = ".."

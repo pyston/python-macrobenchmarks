@@ -8,4 +8,4 @@ dependencies = [
 dynamic = ["version"]
 
 [tool.pyperformance]
-metabase = ".."
+inherits = ".."
