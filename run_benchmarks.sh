@@ -134,14 +134,15 @@ else
 fi
 verbose $venv/bin/pip install --upgrade "$pyperformance"
 
-if [ $reset_mypy = 'yes' ]; then
-    divider "getting a fresh copy of the mypy repo"
-    verbose rm -rf $mypy
-    verbose git clone --depth 1 --branch v0.790 https://github.com/python/mypy/ $mypy
-    pushd $mypy
-    verbose git submodule update --init mypy/typeshed
-    popd
-
+if [ -n "$mypy" ]; then
+    if [ $reset_mypy = 'yes' ]; then
+        divider "getting a fresh copy of the mypy repo"
+        verbose rm -rf $mypy
+        verbose git clone --depth 1 --branch v0.790 https://github.com/python/mypy/ $mypy
+        pushd $mypy
+        verbose git submodule update --init mypy/typeshed
+        popd
+    fi
     pushd $mypy
     divider "installing the mypy requirements into $venv"
     verbose $venv/bin/pip install -r mypy-requirements.txt
