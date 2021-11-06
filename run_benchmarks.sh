@@ -18,6 +18,24 @@ function verbose() {
     )
 }
 
+function rotate() {
+    local force='no'
+    if [ "$1" = '--force' ]; then
+        shift
+        force='yes'
+    fi
+    local oldfile=$1
+    local newfile=$oldfile.bak
+    if [ -e $newfile ]; then
+        if [ $force = 'no' ]; then
+            >&2 echo "ERROR: $newfile already exists"
+            exit 1
+        fi
+        verbose rm $newfile
+    fi
+    verbose mv $oldfile $newfile
+}
+
 now=$(date --utc +'%Y%m%d-%H%M%S')
 
 
@@ -43,6 +61,7 @@ manifest=
 outfile=
 benchmarks=
 mypy='no'
+clean=
 skip_setup='no'
 argv=()
 while [ $# -gt 0 ]; do
@@ -82,8 +101,23 @@ while [ $# -gt 0 ]; do
                 esac
             fi
             ;;
+        --clean)
+            if [ "$skip_setup" = 'yes' ]; then
+                >&2 echo "ERROR: got --clean and --skip-setup"
+                exit 1
+            fi
+            clean='yes'
+            ;;
+        --no-clean)
+            clean='no'
+            ;;
         --skip-setup)
+            if [ "$clean" = 'yes' ]; then
+                >&2 echo "ERROR: got --clean and --skip-setup"
+                exit 1
+            fi
             skip_setup='yes'
+            clean='no'
             ;;
         *)
             argv+=("$arg")
@@ -93,17 +127,17 @@ done
 
 if [ -z "$target_python" ]; then
     target_python=$venv/bin/python3
-    if [ -z "$venv" -o ! -e $target_python ]; then
+    if [ -z "$venv" -o ! -e "$target_python" ]; then
         >&2 echo "ERROR: missing -p/--python arg"
         exit 1
     fi
 elif [ -z "$venv" ]; then
     venv=venv/pyston-python-macrobenchmarks
     reset_venv='yes'
-elif [ ! -e $venv ]; then
+elif [ ! -e "$venv" ]; then
     reset_venv='yes'
     >&2 echo "WARNING: requested venv does not exist but will be created"
-elif [ "$(realpath $venv/bin/python3)" != $target_python ]; then
+elif [ "$(realpath "$venv/bin/python3")" != "$target_python" ]; then
     reset_venv='yes'
     >&2 echo "WARNING: requested venv is outdated and will be reset"
 fi
@@ -117,9 +151,9 @@ elif [ -d $outfile ]; then
     outdir=$outfile
     outfile=$outdir/results-$now.json
 else
-    outdir=$(dirname $outfile)
+    outdir=$(dirname "$outfile")
     if [ -z "$outdir" ]; then
-        outdir = '.'
+        outdir='.'
         outfile=./$outfile
     fi
 fi
@@ -141,16 +175,25 @@ else
             ;;
     esac
 fi
+MYPY_REPO_ROOT=/tmp/mypy
 if [ -z "$mypy" -o "$mypy" = 'yes' ]; then
-    mypy=/tmp/mypy
+    mypy=MYPY_REPO_ROOT
     reset_mypy='yes'
-elif [ $mypy == 'no' ]; then
+elif [ "$mypy" == 'no' ]; then
     mypy=
     reset_mypy='no'
-elif [ ! -e $mypy ]; then
+elif [ ! -e "$mypy" ]; then
     reset_mypy='yes'
 else
     reset_mypy='no'
+fi
+if [ "$clean" = 'yes' ]; then
+    if [ "$skip_setup" != 'no' ]; then
+        >&2 echo "ERROR: got --clean and --skip-setup"
+        exit 1
+    fi
+    reset_mypy='yes'
+    reset_venv='yes'
 fi
 
 
@@ -158,50 +201,60 @@ fi
 if [ $skip_setup = 'no' ]; then
     if [ $reset_venv = 'yes' ]; then
         divider "creating the top-level venv at $venv"
-        verbose rm -rf $venv
-        verbose $target_python -m venv $venv
+        if [ -e "$venv" ]; then
+            #verbose rm -rf $venv
+            rotate --force "$venv"
+        fi
+        verbose "$target_python" -m venv "$venv"
     fi
     divider "ensuring setuptools is up-to-date in $venv"
-    verbose $venv/bin/pip install --upgrade setuptools
+    verbose "$venv/bin/pip" install --upgrade setuptools
 
     if [ $clone_pp = 'yes' ]; then
         divider "preparing pyperformance at $pyperformance"
+        if [ -e "$pyperformance" ]; then
+            rotate "$pyperformance"
+        fi
         verbose git clone https://github.com/python/pyperformance "$pyperformance"
     fi
-    if [ $pyperformance = 'pyperformance' ]; then
+    if [ "$pyperformance" = 'pyperformance' ]; then
         divider "installing pyperformance from PyPI"
+        verbose "$venv/bin/pip" install --upgrade "$pyperformance"
     else
         divider "installing pyperformance into $venv from $pyperformance"
+        verbose "$venv/bin/pip" install --force-reinstall "$pyperformance"
     fi
-    verbose $venv/bin/pip install --upgrade "$pyperformance"
 
     if [ -n "$mypy" ]; then
         if [ $reset_mypy = 'yes' ]; then
             divider "getting a fresh copy of the mypy repo"
-            verbose rm -rf $mypy
-            verbose git clone --depth 1 --branch v0.790 https://github.com/python/mypy/ $mypy
-            pushd $mypy
+            if [ -e "$mypy" ]; then
+                #verbose rm -rf $mypy
+                rotate "$mypy"
+            fi
+            verbose git clone --depth 1 --branch v0.790 https://github.com/python/mypy/ "$mypy"
+            pushd "$mypy"
             verbose git submodule update --init mypy/typeshed
             popd
         fi
-        pushd $mypy
+        pushd "$mypy"
         divider "installing the mypy requirements into $venv"
-        verbose $venv/bin/pip install -r mypy-requirements.txt
+        verbose "$venv/bin/pip" install -r mypy-requirements.txt
         divider "building mypyc and installing it in $venv"
-        verbose $venv/bin/python setup.py --use-mypyc install
+        verbose "$venv/bin/python3" setup.py --use-mypyc install
         popd
     fi
 
     divider "other setup"
-    verbose mkdir -p $outdir
+    verbose mkdir -p "$outdir"
 fi
 
 
 # Run the benchmarks.
 divider "running the benchmarks"
-verbose $venv/bin/python3 -m pyperformance run \
-    --venv $venv \
-    --manifest $manifest \
-    --benchmarks $benchmarks \
-    --output $outfile \
+verbose "$venv/bin/python3" -m pyperformance run \
+    --venv "$venv" \
+    --manifest "$manifest" \
+    --benchmarks "$benchmarks" \
+    --output "$outfile" \
     "${argv[@]}"

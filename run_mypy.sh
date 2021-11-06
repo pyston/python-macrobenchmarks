@@ -13,13 +13,11 @@ fi
 
 BINARY=$1
 
-set -u
-
 ENV=/tmp/macrobenchmark_env
-rm -rf $ENV
-rm -rf /tmp/mypy
-export PYPERFORMANCE=
-./run_benchmarks.sh --python $BINARY --venv $ENV --with-mypyc
+#time $ENV/bin/python benchmarks/mypy_bench.py 50
+#time $ENV/bin/python benchmarks/mypy_bench.py 50
+#time $ENV/bin/python benchmarks/mypy_bench.py 50
+./run_benchmarks.sh --python $BINARY --venv $ENV --with-mypyc --clean
 # XXX Convert results to verbose "time" output.
 ./run_benchmarks.sh --python $BINARY --venv $ENV --with-mypyc --skip-setup
 # XXX Convert results to verbose "time" output.
