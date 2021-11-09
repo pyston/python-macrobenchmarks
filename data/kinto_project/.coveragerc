@@ -1,0 +1,3 @@
+[run]
+source = kinto_project
+omit = kinto_project/test*
