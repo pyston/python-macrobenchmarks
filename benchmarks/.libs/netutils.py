@@ -1,24 +1,52 @@
 import contextlib
 import ipaddress
+import os.path
 import socket
 import subprocess
 import time
 
 
 @contextlib.contextmanager
-def serving(argv, sitedir, addr):
+def serving(argv, sitedir, addr, *,
+            pause=None,
+            kill=False,
+            quiet=True,
+            ):
+    if os.path.exists(addr):
+        sock = addr
+        addr = None
+        try:
+            os.remove(sock)
+        except FileNotFoundError:
+            pass
+    else:
+        sock = None
+
     p = subprocess.Popen(
         argv,
         cwd=sitedir,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
+        stdout=subprocess.DEVNULL if quiet else None,
+        stderr=subprocess.STDOUT if quiet else None,
     )
     try:
-        waitUntilUp(addr)
+        if pause:
+            time.sleep(pause)
+        if not sock:
+            try:
+                waitUntilUp(addr)
+            except NotImplementedError:
+                sock = addr
+                addr = None
+        if sock:
+            while not os.path.exists(sock):
+                time.sleep(0.001)
+        assert p.poll() is None, p.poll()
         yield
         assert p.poll() is None, p.poll()
     finally:
         p.terminate()
+        if kill:
+            p.kill()
         p.wait()
 
 

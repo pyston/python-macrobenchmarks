@@ -7,6 +7,7 @@ flaskblogging	<local>
 gevent_hub	<local>
 gunicorn	<local>
 json	<local>
+kinto	<local>
 mypy	<local>
 mypyc	<local:mypy>
 pycparser	<local>
