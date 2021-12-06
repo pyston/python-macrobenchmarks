@@ -19,7 +19,15 @@ TARGETS = [
 ]
 
 
-def bench_mypy(devnull):
+#############################
+# benchmarks
+
+def bench_mypy(loops=20):
+    elapsed, _ = _bench_mypy(loops)
+    return elapsed
+
+
+def _bench_mypy(loops=20, *, legacy=False):
     """Meansure running mypy on a file N times.
 
     The target file is large (over 2300 lines) with extensive use
@@ -29,18 +37,34 @@ def bench_mypy(devnull):
     the measurement includes the time it takes to read the file
     from disk.  Also, all output is discarded (sent to /dev/null).
     """
-    try:
-        main(None, devnull, devnull, TARGETS)
-    except SystemExit:
-        pass
+    elapsed = 0
+    times = []
+    with open(os.devnull, "w") as devnull:
+        for i in range(loops):
+            if legacy:
+                print(i)
+            # This is a macro benchmark for a Python implementation
+            # so "elapsed" covers more than just how long main() takes.
+            t0 = pyperf.perf_counter()
+            try:
+                main(None, devnull, devnull, TARGETS)
+            except SystemExit:
+                pass
+            t1 = pyperf.perf_counter()
 
+            elapsed += t1 - t0
+            times.append(t0)
+        times.append(pyperf.perf_counter())
+    return elapsed, times
+
+
+#############################
+# the script
 
 if __name__ == "__main__":
+    from legacyutils import maybe_handle_legacy
+    maybe_handle_legacy(_bench_mypy, legacyarg='legacy')
+
     runner = pyperf.Runner()
     runner.metadata['description'] = "Test the performance of mypy types"
-    runner.argparser.add_argument("loops", nargs="?", type=int, default=1)
-    args = runner.argparser.parse_args()
-
-    with open(os.devnull, "w") as devnull:
-        runner.bench_func("mypy", bench_mypy, devnull,
-                          inner_loops=args.loops)
+    runner.bench_time_func("mypy", bench_mypy)

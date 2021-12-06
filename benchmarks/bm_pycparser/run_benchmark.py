@@ -12,22 +12,33 @@ DATADIR = os.path.join(
 TARGET = os.path.join(DATADIR, "pycparser_target")
 
 
-def _iter_files(rootdir=TARGET, *, _cache={}):
-    if not _cache:
-        files = _cache['files'] = []
-        for name in os.listdir(rootdir):
-            if not name.endswith(".ppout"):
-                continue
-            filename = os.path.join(TARGET, name)
-            with open(filename) as f:
-                data = (filename, f.read())
-                files.append(data)
-                yield data
-    else:
-        yield from _cache['files']
+def _iter_files(rootdir=TARGET):
+    for name in os.listdir(rootdir):
+        if not name.endswith(".ppout"):
+            continue
+        filename = os.path.join(TARGET, name)
+        with open(filename) as f:
+            yield (filename, f.read())
 
+
+def parse_files(files):
+    for _, text in files:
+        # We use a new parser each time because CParser objects
+        # aren't designed for re-use.
+        parser = c_parser.CParser()
+        ast = parser.parse(text, '')
+        assert isinstance(ast, c_ast.FileAST)
+
+
+#############################
+# benchmarks
 
 def bench_pycparser(loops=20):
+    elapsed, _ = _bench_pycparser(loops)
+    return elapsed
+
+
+def _bench_pycparser(loops=20):
     """Measure running pycparser on several large C files N times.
 
     The files are all relatively large, from well-known projects.
@@ -39,21 +50,30 @@ def bench_pycparser(loops=20):
     * reading them from disk
     * creating the CParser object
     """
-    elapsed = 0
-    parse = c_parser.CParser.parse
-    for _ in range(loops):
-        for filename, text in _iter_files():
-            # We use a new parser each time because CParser objects
-            # aren't designed for re-use.
-            parser = c_parser.CParser()
-            t0 = pyperf.perf_counter()
-            ast = parse(parser, text, filename)
-            elapsed += pyperf.perf_counter() - t0
-            assert isinstance(ast, c_ast.FileAST)
-    return elapsed
+    files = list(_iter_files())
 
+    elapsed = 0
+    times = []
+    for _ in range(loops):
+        times.append(pyperf.perf_counter())
+        # This is a macro benchmark for a Python implementation
+        # so "elapsed" covers more than just how long parser.parse() takes.
+        t0 = pyperf.perf_counter()
+        parse_files(files)
+        t1 = pyperf.perf_counter()
+
+        elapsed += t1 - t0
+    times.append(pyperf.perf_counter())
+    return elapsed, times
+
+
+#############################
+# the script
 
 if __name__ == "__main__":
+    from legacyutils import maybe_handle_legacy
+    maybe_handle_legacy(_bench_pycparser)
+
     runner = pyperf.Runner()
     runner.metadata['description'] = "Test the performance of pycparser"
     runner.bench_time_func("pycparser", bench_pycparser)

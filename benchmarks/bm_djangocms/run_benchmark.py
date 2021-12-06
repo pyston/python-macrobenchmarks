@@ -117,6 +117,11 @@ def _ensure_datadir(datadir, preserve=True):
 # benchmarks
 
 def bench_djangocms_requests(sitedir, loops=INNER_LOOPS):
+    elapsed, _ = _bench_djangocms_requests(loops)
+    return elapsed
+
+
+def _bench_djangocms_requests(sitedir, loops=INNER_LOOPS, legacy=False):
     """Measure N HTTP requests to a local server.
 
     Note that the server is freshly started here.
@@ -130,14 +135,26 @@ def bench_djangocms_requests(sitedir, loops=INNER_LOOPS):
     Hence this should be used with bench_time_func()
     insted of bench_func().
     """
+    start = pyperf.perf_counter()
     elapsed = 0
+    times = []
     with netutils.serving(ARGV_SERVE, sitedir, "127.0.0.1:8000"):
-        requests_get = requests.get
-        for _ in range(loops):
+        for i in range(loops):
+            # This is a macro benchmark for a Python implementation
+            # so "elapsed" covers more than just how long a request takes.
             t0 = pyperf.perf_counter()
-            requests_get("http://localhost:8000/").text
-            elapsed += pyperf.perf_counter() - t0
-    return elapsed
+            requests.get("http://localhost:8000/").text
+            t1 = pyperf.perf_counter()
+
+            elapsed += t1 - t0
+            times.append(t0)
+            if legacy and (i % 100 == 0):
+                print(i, t0 - start)
+        times.append(pyperf.perf_counter())
+        if legacy:
+            total = times[-1] - start
+            print("%.2fs (%.3freq/s)" % (total, loops / total))
+    return elapsed, times
 
 
 # We can't set "add_cmdline_args" on pyperf.Runner
@@ -157,17 +174,20 @@ class _Runner(pyperf.Runner):
         )
 
 
+#############################
+# the script
+
 if __name__ == "__main__":
     """
     Usage:
-        python djangocms.py
-        python djangocms.py --setup DATADIR
-        python djangocms.py --serve DATADIR
+        python benchmarks/bm_djangocms/run_benchmark.py
+        python benchmarks/bm_djangocms/run_benchmark.py --setup DIR
+        python benchmarks/bm_djangocms/run_benchmark.py --serve DIR
 
     The first form creates a temporary directory, sets up djangocms in it,
     serves out of it, and removes the directory.
     The second form sets up a djangocms installation in the given directory.
-    The third form runs a benchmark out of an already-set-up directory
+    The third form runs the benchmark out of an already-set-up directory
     The second and third forms are useful if you want to benchmark the
     initial migration phase separately from the second serving phase.
     """
@@ -175,30 +195,27 @@ if __name__ == "__main__":
     runner.metadata['description'] = "Test the performance of a Django data migration"
 
     # Parse the CLI args.
-    runner.argparser.add_argument("--setup", action="store_const", const=True)
+    runner.argparser.add_argument("--legacy", action='store_true')
     group = runner.argparser.add_mutually_exclusive_group()
+    group.add_argument("--setup")
     group.add_argument("--serve")
-    group.add_argument("datadir", nargs="?")
     args = runner.argparser.parse_args()
 
-    if args.serve is not None:
-        args.datadir = args.serve
-        args.serve = True
-        if not args.setup:
-            args.setup = False
-            if not args.datadir:
-                runner.argparser.error("missing datadir")
-            elif not os.path.exists(args.datadir):
-                cmd = f"{sys.executable} {sys.argv[0]} --setup {args.datadir}?"
-                sys.exit(f"ERROR: Did you forget to run {cmd}?")
-        default = False
-    elif args.setup is not None:
+    if args.setup is not None:
+        args.datadir = args.setup
+        args.setup = True
         args.serve = False
-        default = False
+    elif args.serve is not None:
+        args.datadir = args.serve
+        args.setup = False
+        args.serve = True
+        if not os.path.exists(args.datadir):
+            cmd = f"{sys.executable} {sys.argv[0]} --setup {args.datadir}?"
+            sys.exit(f"ERROR: Did you forget to run {cmd}?")
     else:
+        args.datadir = None
         args.setup = True
         args.serve = True
-        default = True
 
     # DjangoCMS looks for Python on $PATH?
     _ensure_python_on_PATH()
@@ -209,8 +226,9 @@ if __name__ == "__main__":
         # First, set up the site.
         if args.setup:
             sitedir, elapsed = setup(datadir)
-            print("%.2fs to initialize db" % (elapsed,))
-            print(f"site created in {sitedir}")
+            if args.legacy:
+                print("%.2fs to initialize db" % (elapsed,))
+                print(f"site created in {sitedir}")
             if not args.serve:
                 print(f"now run {sys.executable} {sys.argv[0]} --serve {datadir}")
         else:
@@ -219,6 +237,11 @@ if __name__ == "__main__":
 
         # Then run the benchmark.
         if args.serve:
+            if args.legacy:
+                from legacyutils import maybe_handle_legacy
+                maybe_handle_legacy(_bench_djangocms_requests, sitedir, legacyarg='legacy')
+                sys.exit(0)
+
             runner.datadir = datadir
 
             def time_func(loops, *args):

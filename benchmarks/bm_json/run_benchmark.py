@@ -11,7 +11,15 @@ DATADIR = os.path.join(
 TARGET = os.path.join(DATADIR, "reddit_comments.json")
 
 
+#############################
+# benchmarks
+
 def bench_json_loads(loops=400):
+    elapsed, _ = _bench_json_loads(loops)
+    return elapsed
+
+
+def _bench_json_loads(loops=400):
     """Measure running json.loads() N times.
 
     The target data is nearly 1100 JSON objects, each on a single line,
@@ -28,22 +36,33 @@ def bench_json_loads(loops=400):
     """
     with open(TARGET) as f:
         s = f.read()
-#    data = s.split('\n')
-    data = s.splitlines()
+    lines = s.splitlines()
 
     elapsed = 0
-    json_loads = json.loads
+    times = []
     for _ in range(loops):
-        for s in data:
-            if not s:
+        # This is a macro benchmark for a Python implementation
+        # so "elapsed" covers more than just how long json.loads() takes.
+        t0 = pyperf.perf_counter()
+        for text in lines:
+            if not text:
                 continue
-            t0 = pyperf.perf_counter()
-            json_loads(s)
-            elapsed += pyperf.perf_counter() - t0
-    return elapsed
+            json.loads(text)
+        t1 = pyperf.perf_counter()
 
+        elapsed += t1 - t0
+        times.append(t0)
+    times.append(pyperf.perf_counter())
+    return elapsed, times
+
+
+#############################
+# the script
 
 if __name__ == "__main__":
+    from legacyutils import maybe_handle_legacy
+    maybe_handle_legacy(_bench_json_loads)
+
     runner = pyperf.Runner()
     runner.metadata['description'] = "Test the performance of json"
     runner.bench_time_func("json", bench_json_loads)

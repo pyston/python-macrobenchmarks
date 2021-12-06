@@ -83,7 +83,9 @@ def bench_switch(loops=1000):
         for _ in range(loops):
             t0 = pyperf.perf_counter()
             child_switch()
-            elapsed += pyperf.perf_counter() - t0
+            t1 = pyperf.perf_counter()
+
+            elapsed += t1 - t0
         return elapsed
 
 
@@ -97,7 +99,9 @@ def bench_wait_ready(loops=1000):
         for _ in range(loops):
             t0 = pyperf.perf_counter()
             hub_wait(watcher)
-            elapsed += pyperf.perf_counter() - t0
+            t1 = pyperf.perf_counter()
+
+            elapsed += t1 - t0
         return elapsed
 
 
@@ -145,9 +149,19 @@ BENCHMARKS = {
 }
 
 
+#############################
+# the script
+
 if __name__ == "__main__":
+    import sys
+    if '--legacy' in sys.argv:
+        for i in range(10000):
+            bench_switch()
+        sys.exit(0)
+
     runner = pyperf.Runner()
     runner.metadata['description'] = "Test the performance of gevent"
+    runner.argparser.add_argument("--legacy", action='store_true')
     runner.argparser.add_argument("benchmark", nargs="?",
                                   choices=sorted(BENCHMARKS),
                                   default="gevent_hub")
