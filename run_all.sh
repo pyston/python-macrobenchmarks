@@ -13,8 +13,7 @@ set -x
 mkdir -p results
 
 ENV=/tmp/macrobenchmark_env
-for bench in kinto; do
-#for bench in flaskblogging djangocms mypy pylint pycparser pytorch_alexnet_inference gunicorn aiohttp thrift gevent_hub kinto; do
+for bench in flaskblogging djangocms mypy pylint pycparser pytorch_alexnet_inference gunicorn aiohttp thrift gevent_hub kinto; do
     case $bench in
         gevent_hub)
             outname=gevent_bench_hub
