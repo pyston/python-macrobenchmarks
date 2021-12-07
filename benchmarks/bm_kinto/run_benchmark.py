@@ -18,7 +18,7 @@ SOCK = "/tmp/kinto.sock"
 ADDR = "127.0.0.1:8000"
 
 DATADIR = os.path.join(
-    os.path.dirname(__file__),
+    os.path.abspath(os.path.dirname(__file__)),
     "data",
 )
 SETUP_PY = os.path.join(DATADIR, "setup.py")
@@ -35,12 +35,16 @@ def bench_kinto(loops=5000):
 
 
 def _bench_kinto(loops=5000, legacy=False):
-    subprocess.check_call(
-        [PYTHON, SETUP_PY, "develop"],
+    cmd = [PYTHON, SETUP_PY, "develop"]
+    proc = subprocess.run(
+        cmd,
         cwd=DATADIR,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.STDOUT,
     )
+    if proc.returncode != 0:
+        print(f'# running: {" ".join(cmd)} (in {DATADIR})')
+        subprocess.run(cmd, cwd=DATADIR, check=True)
 
     cmd_app = [UWSGI, PRODUCTION_INI]
     with netutils.serving(cmd_app, DATADIR, SOCK, kill=True):
