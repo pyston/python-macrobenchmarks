@@ -6,7 +6,7 @@ A collection of macro benchmarks for the Python programming language
 
 ```shell
 # Run the default benchmarks:
-python3 -m pyperformance run --manifest ./benchmarks/MANIFEST
+python3 -m pyperformance run --manifest $PWD/benchmarks/MANIFEST
 ```
 
 The benchmarks can still be run without pyperformance.  This will produce
