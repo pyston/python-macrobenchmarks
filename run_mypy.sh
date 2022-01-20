@@ -24,13 +24,14 @@ rm -rf /tmp/mypy
 git clone --depth 1 --branch v0.790 https://github.com/python/mypy/ /tmp/mypy
 cd /tmp/mypy
 
+$ENV/bin/pip install pyperf==2.2.0
 $ENV/bin/pip install -r mypy-requirements.txt
 $ENV/bin/pip install --upgrade setuptools
 git submodule update --init mypy/typeshed
 $ENV/bin/python setup.py --use-mypyc install
 
 cd -
-time $ENV/bin/python benchmarks/mypy_bench.py 50
-time $ENV/bin/python benchmarks/mypy_bench.py 50
-time $ENV/bin/python benchmarks/mypy_bench.py 50
+time $ENV/bin/python benchmarks/bm_mypy/run_benchmark.py --legacy 50
+time $ENV/bin/python benchmarks/bm_mypy/run_benchmark.py --legacy 50
+time $ENV/bin/python benchmarks/bm_mypy/run_benchmark.py --legacy 50
 

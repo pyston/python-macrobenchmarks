@@ -1,0 +1,9 @@
+[project]
+name = "bm_pycparser"
+dependencies = [
+    "pycparser",
+]
+dynamic = ["version"]
+
+[tool.pyperformance]
+inherits = ".."

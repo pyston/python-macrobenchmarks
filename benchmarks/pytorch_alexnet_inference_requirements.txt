@@ -1,4 +1,0 @@
-future==0.18.2
-numpy==1.19.0
-Pillow==8.0.0
-torch==1.5.1

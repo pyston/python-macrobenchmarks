@@ -1,0 +1,7 @@
+[project]
+name = "bm_gevent_switch"
+dependencies = ["gevent"]
+dynamic = ["version"]
+
+[tool.pyperformance]
+extra_opts = ["gevent_switch"]

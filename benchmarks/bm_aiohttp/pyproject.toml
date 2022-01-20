@@ -1,0 +1,12 @@
+[project]
+name = "bm_aiohttp"
+dependencies = [
+    "aiohttp",
+    "gunicorn",
+    "requests",
+    "uvloop",
+]
+dynamic = ["version"]
+
+[tool.pyperformance]
+inherits = ".."

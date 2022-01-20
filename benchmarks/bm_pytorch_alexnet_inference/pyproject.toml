@@ -1,0 +1,10 @@
+[project]
+name = "bm_pytorch_alexnet_inference"
+dependencies = [
+    "torch",
+    "Pillow",
+]
+dynamic = ["version"]
+
+[tool.pyperformance]
+inherits = ".."

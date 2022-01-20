@@ -1,0 +1,9 @@
+[project]
+name = "bm_mypy"
+dependencies = [
+    "mypy",
+]
+dynamic = ["version"]
+
+[tool.pyperformance]
+inherits = ".."

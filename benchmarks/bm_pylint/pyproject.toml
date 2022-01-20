@@ -1,0 +1,9 @@
+[project]
+name = "bm_pylint"
+dependencies = [
+    "pylint",
+]
+dynamic = ["version"]
+
+[tool.pyperformance]
+inherits = ".."

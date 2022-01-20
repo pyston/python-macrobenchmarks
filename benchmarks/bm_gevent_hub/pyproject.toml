@@ -1,0 +1,7 @@
+[project]
+name = "bm_gevent_hub"
+dependencies = ["gevent"]
+dynamic = ["version"]
+
+[tool.pyperformance]
+inherits = ".."

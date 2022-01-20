@@ -1,0 +1,6 @@
+[project]
+name = "bm_json"
+dynamic = ["version"]
+
+[tool.pyperformance]
+inherits = ".."

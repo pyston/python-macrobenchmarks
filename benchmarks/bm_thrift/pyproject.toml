@@ -1,0 +1,9 @@
+[project]
+name = "bm_thrift"
+dependencies = [
+    "thrift",
+]
+dynamic = ["version"]
+
+[tool.pyperformance]
+inherits = ".."

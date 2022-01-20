@@ -1,0 +1,11 @@
+[project]
+name = "bm_flaskblogging"
+dependencies = [
+    "Flask",
+    "Flask-Blogging",
+    "requests",
+]
+dynamic = ["version"]
+
+[tool.pyperformance]
+inherits = ".."

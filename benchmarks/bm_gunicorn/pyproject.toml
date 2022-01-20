@@ -1,0 +1,11 @@
+[project]
+name = "bm_gunicorn"
+dependencies = [
+    "gunicorn",
+    "requests",
+    "uvloop",
+]
+dynamic = ["version"]
+
+[tool.pyperformance]
+inherits = ".."

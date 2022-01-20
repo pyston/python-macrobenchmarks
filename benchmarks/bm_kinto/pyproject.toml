@@ -1,0 +1,15 @@
+[project]
+name = "bm_kinto"
+dependencies = [
+    "kinto",
+    "uWSGI",
+    "pyramind",
+    #"pyramid_jinja2",
+    #"pyramid_debugtoolbar",
+    "waitress",
+    "requests",
+]
+dynamic = ["version"]
+
+[tool.pyperformance]
+inherits = ".."

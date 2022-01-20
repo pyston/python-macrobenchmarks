@@ -1,0 +1,18 @@
+[project]
+name = "bm_djangocms"
+dependencies = [
+    "Django",
+    "django-cms",
+    "djangocms-bootstrap4",
+    "djangocms-file",
+    "djangocms-googlemap",
+    "djangocms-installer",
+    "djangocms-snippet",
+    "djangocms-style",
+    "djangocms-video",
+    "requests",
+]
+dynamic = ["version"]
+
+[tool.pyperformance]
+inherits = ".."
