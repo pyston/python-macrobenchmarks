@@ -239,6 +239,7 @@ if __name__ == "__main__":
         if args.serve:
             if args.legacy:
                 from legacyutils import maybe_handle_legacy
+                sys.argv[1:] = ["--legacy", str(args.loops)]
                 maybe_handle_legacy(_bench_djangocms_requests, sitedir, legacyarg='legacy')
                 sys.exit(0)
 
