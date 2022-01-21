@@ -199,7 +199,12 @@ if __name__ == "__main__":
     group = runner.argparser.add_mutually_exclusive_group()
     group.add_argument("--setup")
     group.add_argument("--serve")
-    args = runner.argparser.parse_args()
+
+    legacy_args = None
+    if "--legacy" in sys.argv:
+        args, legacy_args = runner.argparser.parse_known_args()
+    else:
+        args = runner.argparser.parse_args()
 
     if args.setup is not None:
         args.datadir = args.setup
@@ -239,7 +244,7 @@ if __name__ == "__main__":
         if args.serve:
             if args.legacy:
                 from legacyutils import maybe_handle_legacy
-                sys.argv[1:] = ["--legacy", str(args.loops)]
+                sys.argv[1:] = ["--legacy"] + legacy_args
                 maybe_handle_legacy(_bench_djangocms_requests, sitedir, legacyarg='legacy')
                 sys.exit(0)
 
