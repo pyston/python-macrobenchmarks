@@ -117,7 +117,7 @@ def _ensure_datadir(datadir, preserve=True):
 # benchmarks
 
 def bench_djangocms_requests(sitedir, loops=INNER_LOOPS):
-    elapsed, _ = _bench_djangocms_requests(loops)
+    elapsed, _ = _bench_djangocms_requests(sitedir, loops)
     return elapsed
 
 

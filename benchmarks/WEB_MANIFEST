@@ -1,0 +1,6 @@
+[benchmarks]
+
+name	metafile
+djangocms	<local>
+flaskblogging	<local>
+kinto	<local>
