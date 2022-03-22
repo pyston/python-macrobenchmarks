@@ -204,6 +204,7 @@ if __name__ == "__main__":
     if "--legacy" in sys.argv:
         args, legacy_args = runner.argparser.parse_known_args()
     else:
+        raise Exception("pyperformance doesn't support the pyston macrobenchmark suite yet")
         args = runner.argparser.parse_args()
 
     if args.setup is not None:
