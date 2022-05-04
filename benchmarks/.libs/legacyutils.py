@@ -4,7 +4,6 @@ import sys
 
 def maybe_handle_legacy(bench_func, *args, loopsarg='loops', legacyarg=None):
     if '--legacy' not in sys.argv:
-        raise Exception("pyperformance doesn't support the pyston macrobenchmark suite yet")
         return
     argv = list(sys.argv[1:])
     argv.remove('--legacy')
