@@ -2,11 +2,14 @@
 A collection of macro benchmarks for the Python programming language
 
 
-## usage
+## Usage
 
 ```shell
-# Run the default benchmarks:
-python3 -m pyperformance run --manifest $PWD/benchmarks/MANIFEST
+# Run the benchmarks that Pyston uses to measure itself:
+python3 -m pyperformance run --manifest $PWD/benchmarks/MANIFEST -b pyston_standard
+
+# Run (almost) all the benchmarks in the repository:
+python3 -m pyperformance run --manifest $PWD/benchmarks/MANIFEST -b all
 ```
 
 The benchmarks can still be run without pyperformance.  This will produce
