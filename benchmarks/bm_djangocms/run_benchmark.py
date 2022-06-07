@@ -10,6 +10,7 @@ and browsing around.
 """
 
 import contextlib
+from contextlib import nullcontext
 import os
 import os.path
 import requests
@@ -138,22 +139,22 @@ def _bench_djangocms_requests(sitedir, loops=INNER_LOOPS, legacy=False):
     start = pyperf.perf_counter()
     elapsed = 0
     times = []
-    with netutils.serving(ARGV_SERVE, sitedir, "127.0.0.1:8000"):
-        for i in range(loops):
-            # This is a macro benchmark for a Python implementation
-            # so "elapsed" covers more than just how long a request takes.
-            t0 = pyperf.perf_counter()
-            requests.get("http://localhost:8000/").text
-            t1 = pyperf.perf_counter()
 
-            elapsed += t1 - t0
-            times.append(t0)
-            if legacy and (i % 100 == 0):
-                print(i, t0 - start)
-        times.append(pyperf.perf_counter())
-        if legacy:
-            total = times[-1] - start
-            print("%.2fs (%.3freq/s)" % (total, loops / total))
+    for i in range(loops):
+        # This is a macro benchmark for a Python implementation
+        # so "elapsed" covers more than just how long a request takes.
+        t0 = pyperf.perf_counter()
+        requests.get("http://localhost:8000/").text
+        t1 = pyperf.perf_counter()
+
+        elapsed += t1 - t0
+        times.append(t0)
+        if legacy and (i % 100 == 0):
+            print(i, t0 - start)
+    times.append(pyperf.perf_counter())
+    if legacy:
+        total = times[-1] - start
+        print("%.2fs (%.3freq/s)" % (total, loops / total))
     return elapsed, times
 
 
@@ -204,7 +205,6 @@ if __name__ == "__main__":
     if "--legacy" in sys.argv:
         args, legacy_args = runner.argparser.parse_known_args()
     else:
-        raise Exception("pyperformance doesn't support the pyston macrobenchmark suite yet")
         args = runner.argparser.parse_args()
 
     if args.setup is not None:
@@ -243,15 +243,21 @@ if __name__ == "__main__":
 
         # Then run the benchmark.
         if args.serve:
-            if args.legacy:
-                from legacyutils import maybe_handle_legacy
-                sys.argv[1:] = ["--legacy"] + legacy_args
-                maybe_handle_legacy(_bench_djangocms_requests, sitedir, legacyarg='legacy')
-                sys.exit(0)
+            if "--worker" in sys.argv:
+                context = netutils.serving(ARGV_SERVE, sitedir, "127.0.0.1:8000")
+            else:
+                context = nullcontext()
 
-            runner.datadir = datadir
+            with context:
+                if args.legacy:
+                    from legacyutils import maybe_handle_legacy
+                    sys.argv[1:] = ["--legacy"] + legacy_args
+                    maybe_handle_legacy(_bench_djangocms_requests, sitedir, legacyarg='legacy')
+                    sys.exit(0)
 
-            def time_func(loops, *args):
-                return bench_djangocms_requests(*args, loops=loops)
-            runner.bench_time_func("djangocms", time_func, sitedir,
-                                   inner_loops=INNER_LOOPS)
+                runner.datadir = datadir
+
+                def time_func(loops, *args):
+                    return bench_djangocms_requests(*args, loops=loops)
+                runner.bench_time_func("djangocms", time_func, sitedir,
+                                       inner_loops=INNER_LOOPS)
