@@ -55,7 +55,7 @@ def _bench_flask_requests(loops=1800, legacy=False):
     times.append(pyperf.perf_counter())
     if legacy:
         total = times[-1] - start
-        print("%.2fs (%.3freq/s)" % (total, loops / total))
+        print("%.2fs (%.2f ms / %.3freq/s)" % (total, total / loops * 1e3, loops / total))
     return elapsed, times
 
 
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         with netutils.serving(ARGV, DATADIR, "127.0.0.1:8000"):
             maybe_handle_legacy(_bench_flask_requests, legacyarg='legacy')
 
-    if "--worker" in sys.argv:
+    if "--worker" not in sys.argv:
         context = netutils.serving(ARGV, DATADIR, "127.0.0.1:8000")
     else:
         context = nullcontext()

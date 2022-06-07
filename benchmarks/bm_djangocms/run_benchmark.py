@@ -243,7 +243,7 @@ if __name__ == "__main__":
 
         # Then run the benchmark.
         if args.serve:
-            if "--worker" in sys.argv:
+            if "--worker" not in sys.argv:
                 context = netutils.serving(ARGV_SERVE, sitedir, "127.0.0.1:8000")
             else:
                 context = nullcontext()

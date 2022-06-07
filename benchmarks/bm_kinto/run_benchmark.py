@@ -85,7 +85,7 @@ if __name__ == "__main__":
     if NGINX is None:
         raise Exception("nginx is not installed")
 
-    if "--worker" in sys.argv:
+    if "--worker" not in sys.argv:
         cmd_app = [UWSGI, PRODUCTION_INI]
         context = netutils.serving(cmd_app, DATADIR, SOCK, kill=True)
     else:
