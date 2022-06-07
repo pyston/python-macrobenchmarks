@@ -64,7 +64,9 @@ def _bench_flask_requests(loops=1800, legacy=False):
 
 if __name__ == "__main__":
     from legacyutils import maybe_handle_legacy
-    maybe_handle_legacy(_bench_flask_requests, legacyarg='legacy')
+    if "--legacy" in sys.argv:
+        with netutils.serving(ARGV, DATADIR, "127.0.0.1:8000"):
+            maybe_handle_legacy(_bench_flask_requests, legacyarg='legacy')
 
     if "--worker" in sys.argv:
         context = netutils.serving(ARGV, DATADIR, "127.0.0.1:8000")
