@@ -1,4 +1,4 @@
-from contextlib import nullcontext
+from contextlib import ExitStack
 import os
 import os.path
 import requests
@@ -36,43 +36,30 @@ def bench_kinto(loops=5000):
 
 
 def _bench_kinto(loops=5000, legacy=False):
-    cmd = [PYTHON, SETUP_PY, "develop"]
-    proc = subprocess.run(
-        cmd,
-        cwd=DATADIR,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-    )
-    if proc.returncode != 0:
-        print(f'# running: {" ".join(cmd)} (in {DATADIR})')
-        subprocess.run(cmd, cwd=DATADIR, check=True)
+    if legacy:
+        print(requests.get("http://localhost:8000/v1").text)
+        # print(requests.put("http://localhost:8000/v1/accounts/testuser", json={"data": {"password": "password1"}}).text)
 
-    cmd_web = [NGINX, "-c", NGINX_CONF, "-p", DATADIR]
-    with netutils.serving(cmd_web, DATADIR, ADDR, pause=0.010, quiet=False):
-        if legacy:
-            print(requests.get("http://localhost:8000/v1").text)
-            # print(requests.put("http://localhost:8000/v1/accounts/testuser", json={"data": {"password": "password1"}}).text)
+    start = pyperf.perf_counter()
+    elapsed = 0
+    times = []
+    for i in range(loops):
+        # This is a macro benchmark for a Python implementation
+        # so "elapsed" covers more than just how long a request takes.
+        t0 = pyperf.perf_counter()
+        # requests.get("http://localhost:8000/v1/").text
+        urllib.request.urlopen("http://localhost:8000/v1/").read()
+        t1 = pyperf.perf_counter()
 
-        start = pyperf.perf_counter()
-        elapsed = 0
-        times = []
-        for i in range(loops):
-            # This is a macro benchmark for a Python implementation
-            # so "elapsed" covers more than just how long a request takes.
-            t0 = pyperf.perf_counter()
-            # requests.get("http://localhost:8000/v1/").text
-            urllib.request.urlopen("http://localhost:8000/v1/").read()
-            t1 = pyperf.perf_counter()
-
-            elapsed += t1 - t0
-            times.append(t0)
-            if legacy and (i % 100 == 0):
-                print(i, t0 - start)
-        times.append(pyperf.perf_counter())
-        if legacy:
-            total = times[-1] - start
-            print("%.2fs (%.3freq/s)" % (total, loops / total))
-        return elapsed, times
+        elapsed += t1 - t0
+        times.append(t0)
+        if legacy and (i % 100 == 0):
+            print(i, t0 - start)
+    times.append(pyperf.perf_counter())
+    if legacy:
+        total = times[-1] - start
+        print("%.2fs (%.3freq/s)" % (total, loops / total))
+    return elapsed, times
 
 
 #############################
@@ -85,13 +72,26 @@ if __name__ == "__main__":
     if NGINX is None:
         raise Exception("nginx is not installed")
 
-    if "--worker" not in sys.argv:
-        cmd_app = [UWSGI, PRODUCTION_INI]
-        context = netutils.serving(cmd_app, DATADIR, SOCK, kill=True)
-    else:
-        context = nullcontext()
+    with ExitStack() as stack:
+        if "--worker" not in sys.argv:
+            cmd = [PYTHON, SETUP_PY, "develop"]
+            proc = subprocess.run(
+                cmd,
+                cwd=DATADIR,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.STDOUT,
+            )
 
-    with context:
+            if proc.returncode != 0:
+                print(f'# running: {" ".join(cmd)} (in {DATADIR})')
+                subprocess.run(cmd, cwd=DATADIR, check=True)
+
+            cmd_app = [UWSGI, PRODUCTION_INI]
+            stack.enter_context(netutils.serving(cmd_app, DATADIR, SOCK, kill=True))
+
+            cmd_web = [NGINX, "-c", NGINX_CONF, "-p", DATADIR]
+            stack.enter_context(netutils.serving(cmd_web, DATADIR, ADDR, pause=0.010, quiet=False))
+
         runner = pyperf.Runner()
         runner.metadata['description'] = "Test the performance of kinto"
         runner.bench_time_func("kinto", bench_kinto)
