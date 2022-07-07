@@ -4,3 +4,5 @@ name	metafile
 djangocms	<local>
 flaskblogging	<local>
 kinto	<local>
+aiohttp	<local>
+gunicorn	<local>
