@@ -5,9 +5,15 @@ import pyperformance.cli
 from pyperformance._venv import VirtualEnvironment
 
 if __name__ == "__main__":
-    packages = os.environ.get("EXTRA_PACKAGES", "")
-    if packages:
-        packages = [pkg for pkg in packages.split(':')]
+    raw_wheels = os.environ["EXTRA_WHEELS"]
+    assert raw_wheels
+    wheels = []
+    for fn in raw_wheels.split(';'):
+        if os.path.exists(fn):
+            wheels.append(os.path.abspath(fn))
+        else:
+            wheels.append(fn)
+    assert wheels
 
     ensure_reqs = VirtualEnvironment.ensure_reqs
     def new_ensure_reqs(self, *args, **kw):
@@ -15,12 +21,10 @@ if __name__ == "__main__":
 
         r = ensure_reqs(self, *args, **kw)
 
-        if packages:
-            print("Installing", packages)
-            subprocess.check_call([python, "-m", "pip", "install"] + packages)
-
-            if "pyston_lite_autoload" in packages:
-                subprocess.check_call([python, "-c", "import sys; assert 'pyston_lite' in sys.modules"])
+        print("Installing", wheels)
+        subprocess.check_call([python, "-m", "pip", "install"] + wheels)
+        if "pyston_lite_autoload" in raw_wheels:
+            subprocess.check_call([python, "-c", "import sys; assert 'pyston_lite' in sys.modules"])
         return r
 
     VirtualEnvironment.ensure_reqs = new_ensure_reqs
