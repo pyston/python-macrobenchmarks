@@ -7,7 +7,7 @@ from pyperformance._venv import VirtualEnvironment
 if __name__ == "__main__":
     packages = os.environ.get("EXTRA_PACKAGES", "")
     if packages:
-        packages = [pkg for pkg in packages.split(';')]
+        packages = [pkg for pkg in packages.split(':')]
 
     ensure_reqs = VirtualEnvironment.ensure_reqs
     def new_ensure_reqs(self, *args, **kw):
