@@ -24,5 +24,4 @@ flaskblogging
 kinto
 
 [group all]
--mypyc
 -json

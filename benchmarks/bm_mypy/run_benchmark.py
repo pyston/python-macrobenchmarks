@@ -47,7 +47,7 @@ def _bench_mypy(loops=20, *, legacy=False):
             # so "elapsed" covers more than just how long main() takes.
             t0 = pyperf.perf_counter()
             try:
-                main(None, devnull, devnull, TARGETS)
+                main(None, devnull, devnull, TARGETS, clean_exit=True)
             except SystemExit:
                 pass
             t1 = pyperf.perf_counter()
