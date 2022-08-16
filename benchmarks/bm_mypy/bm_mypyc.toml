@@ -1,9 +1,0 @@
-[project]
-name = "bm_mypyc"
-dependencies = [
-    "mypy",
-]
-dynamic = ["version"]
-
-[tool.pyperformance]
-extra_opts = ["--loops", "50"]
