@@ -1,5 +1,8 @@
 # From https://flask-blogging.readthedocs.io/en/latest/#quick-start-example
 
+import collections
+import gc
+
 from flask import Flask, render_template_string, redirect
 from sqlalchemy import create_engine, MetaData
 from flask_login import UserMixin, LoginManager, login_user, logout_user
@@ -70,6 +73,16 @@ def logout():
     logout_user()
     return redirect("/")
 
+@app.route("/gc_stats/")
+def gc_stats():
+    l = gc.get_objects()
+    d = collections.defaultdict(int)
+    for obj in l:
+        d[type(obj).__name__] += 1
+
+    return {
+        "type_counts": list(sorted(d.items(), key=lambda p:-p[1])),
+    }
 
 if __name__ == "__main__":
     # app.run(debug=True, port=8000, use_reloader=True)
