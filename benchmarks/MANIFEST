@@ -15,7 +15,6 @@ pytorch_alexnet_inference	<local>
 thrift	<local>
 
 [group default]
-all
 
 # These are the benchmarks that we use to measure Pyston's performance.
 [group pyston_standard]
