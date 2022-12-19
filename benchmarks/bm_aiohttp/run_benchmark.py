@@ -50,13 +50,7 @@ def _bench_aiohttp_requests(loops=3000, legacy=False):
 
         elapsed += t1 - t0
         times.append(t0)
-        if legacy and (i % 100 == 0):
-            print(i, t0 - start)
     times.append(pyperf.perf_counter())
-    if legacy:
-        total = times[-1] - start
-        print("%.2fs (%.3freq/s)" % (total, loops / total))
-    print(loops, elapsed / loops)
     return elapsed, times
 
 
