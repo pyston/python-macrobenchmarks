@@ -1,5 +1,5 @@
 [project]
-name = "bm_mypy"
+name = "bm_mypy2"
 dependencies = [
     "mypy",
 ]

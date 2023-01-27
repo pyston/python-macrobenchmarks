@@ -53,7 +53,7 @@ def _bench_mypy(loops=20, *, legacy=False):
             # Don't include results from the first run, since it loads the
             # files from disk. Subsequent runs will use the file contents in an
             # in-memory cache.
-            if i > 0:
+            if i > 1:
                 elapsed += t1 - t0
                 times.append(t0)
         times.append(pyperf.perf_counter())
@@ -69,4 +69,4 @@ if __name__ == "__main__":
 
     runner = pyperf.Runner()
     runner.metadata['description'] = "Test the performance of mypy types"
-    runner.bench_time_func("mypy", bench_mypy)
+    runner.bench_time_func("mypy2", bench_mypy)

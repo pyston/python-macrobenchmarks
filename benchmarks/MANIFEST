@@ -8,7 +8,7 @@ gevent_hub	<local>
 gunicorn	<local>
 json	<local>
 kinto	<local>
-mypy	<local>
+mypy2	<local>
 pycparser	<local>
 pylint	<local>
 pytorch_alexnet_inference	<local>
