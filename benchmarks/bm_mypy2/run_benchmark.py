@@ -41,8 +41,6 @@ def _bench_mypy(loops=20, *, legacy=False):
     times = []
     with open(os.devnull, "w") as devnull:
         for i in range(loops):
-            if legacy:
-                print(i)
             # This is a macro benchmark for a Python implementation
             # so "elapsed" covers more than just how long main() takes.
             t0 = pyperf.perf_counter()
@@ -52,8 +50,12 @@ def _bench_mypy(loops=20, *, legacy=False):
                 pass
             t1 = pyperf.perf_counter()
 
-            elapsed += t1 - t0
-            times.append(t0)
+            # Don't include results from the first run, since it loads the
+            # files from disk. Subsequent runs will use the file contents in an
+            # in-memory cache.
+            if i > 1:
+                elapsed += t1 - t0
+                times.append(t0)
         times.append(pyperf.perf_counter())
     return elapsed, times
 
@@ -67,4 +69,4 @@ if __name__ == "__main__":
 
     runner = pyperf.Runner()
     runner.metadata['description'] = "Test the performance of mypy types"
-    runner.bench_time_func("mypy", bench_mypy)
+    runner.bench_time_func("mypy2", bench_mypy)
