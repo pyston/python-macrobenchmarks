@@ -30,10 +30,10 @@ html5lib==1.1
 idna==2.10
 Pillow==8.0.0
 pytz==2020.1
-requests==2.24.0
-six==1.15.0
+requests==2.30.0
+six==1.16.0
 sqlparse==0.4.1
 tzlocal==2.1
 Unidecode==1.1.1
-urllib3==1.25.11
+urllib3==2.0.2
 webencodings==0.5.1
