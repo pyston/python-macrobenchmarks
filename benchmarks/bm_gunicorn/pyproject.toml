@@ -4,6 +4,7 @@ dependencies = [
     "gunicorn",
     "requests",
     "uvloop",
+    "legacy-cgi",
 ]
 dynamic = ["version"]
 
