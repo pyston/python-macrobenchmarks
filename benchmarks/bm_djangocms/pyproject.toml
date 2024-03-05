@@ -10,6 +10,7 @@ dependencies = [
     "djangocms-snippet",
     "djangocms-style",
     "djangocms-video",
+    "legacy-cgi",
     "requests",
 ]
 dynamic = ["version"]
