@@ -28,6 +28,7 @@ djangocms-video==2.3.0
 easy-thumbnails==2.7
 html5lib==1.1
 idna==2.10
+legacy-cgi==2.6
 Pillow==8.0.0
 pytz==2020.1
 requests==2.30.0
