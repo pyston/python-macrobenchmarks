@@ -12,7 +12,8 @@ Flask-WTF==0.14.3
 idna==2.10
 itsdangerous==1.1.0
 Jinja2==2.11.2
-Markdown==3.3.2
+legacy-cgi==2.6
+Markdown==3.5.2
 MarkupSafe==1.1.1
 python-slugify==4.0.1
 requests==2.30.0
