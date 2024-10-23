@@ -1,4 +1,4 @@
-gevent==21.1.2
-greenlet==1.0.0
-zope.event==4.5.0
-zope.interface==5.3.0
+gevent==24.10.3
+greenlet==3.1.1
+zope.event==5.0
+zope.interface==7.1.0
