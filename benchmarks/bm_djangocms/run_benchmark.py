@@ -52,7 +52,7 @@ DJANGOCMS = os.path.join(
     os.path.dirname(sys.executable),
     "djangocms",
 )
-ARGV_CREATE = [DJANGOCMS, SITE_NAME, "--verbose", "--no-sync"]
+ARGV_CREATE = [DJANGOCMS, SITE_NAME, "--no-input"]
 ARGV_MIGRATE = [sys.executable, "manage.py", "migrate"]
 ARGV_SERVE = [sys.executable, "manage.py", "runserver", "--noreload"]
 
