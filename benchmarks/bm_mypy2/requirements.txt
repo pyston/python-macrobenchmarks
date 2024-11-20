@@ -1,4 +1,4 @@
 --no-binary=mypy
 mypy==1.13.0
 mypy-extensions==1.0.0
-typing-extensions==4.2.0
+typing-extensions==4.6.0
